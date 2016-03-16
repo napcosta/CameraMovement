@@ -29,6 +29,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	float y = 0.0f;
 
 	bool is_rotating;
+	bool is_scrolling;
 
 	// Use this for initialization
 	void Start () 
@@ -58,7 +59,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	{
 	//	if (target) 
 	//	{
-
+		ListenScrollWheelZoom();
 		if (Input.GetMouseButton(0)) {
 			
 			x += Input.GetAxis("Mouse X") * xSpeed * distance * 0.02f;
@@ -67,16 +68,6 @@ public class SmoothCameraOrbit : MonoBehaviour {
 			y = ClampAngle(y, yMinLimit, yMaxLimit);
 
 			Quaternion rotation = Quaternion.Euler(y, x, 0);
-
-			distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel")*5, distanceMin, distanceMax);
-
-
-
-			/*RaycastHit hit;
-			if (Physics.Linecast (target.position, transform.position, out hit)) 
-			{
-				distance -=  hit.distance;
-			}*/
 
 			RaycastHit hit;
 			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -90,15 +81,13 @@ public class SmoothCameraOrbit : MonoBehaviour {
 				//lookat_pos = hit.transform.position;
 				//distance = Vector3.Distance(hit.transform.position, transform.position);
 
-
-
 			}
+
 
 			Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
 
 
 			end_camera_pos = rotation * negDistance + Vector3.zero;
-
 
 			transform.rotation = Quaternion.Euler(y, x, 0);
 			is_rotating = true;
@@ -114,7 +103,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 			already_hit = false;
 		}
 
-		ListenScrollWheelZoom();
+
 
 		if (Input.GetMouseButton(2)) {
 			TranslateCameraAlongPlane(Input.mousePosition);
@@ -143,6 +132,11 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	{
 		Vector3 forward_translation = Camera.main.transform.forward*100*Time.deltaTime*Input.GetAxis("Mouse ScrollWheel");
 		end_camera_pos += forward_translation;
+
+
+		//distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel")*5.0f, distanceMin, distanceMax);
+
+		distance = Vector3.Distance(lookat_pos, transform.position);
 	}
 
 	private void TranslateCameraAlongPlane(Vector3 mouseOrigin)
@@ -176,9 +170,6 @@ public class SmoothCameraOrbit : MonoBehaviour {
 
 		//transform.position = Vector3.Lerp(transform.position, end_camera_trans_pos, 0.1f);
 		//lookat_pos = Vector3.Lerp(lookat_pos, end_camera_trans_lookat, 0.1f);
-
-	
-		Debug.Log(end_camera_pos);
 
 		is_rotating = false;
 	}
