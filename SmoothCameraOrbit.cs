@@ -6,8 +6,10 @@ public class SmoothCameraOrbit : MonoBehaviour {
 
 	public Transform target;
 	private Vector3 lookat_pos;
-	private Vector3 end_camera_pos;
-	private Vector3 end_camera_lookat;
+	public Vector3 end_camera_pos;
+	public Vector3 end_camera_trans_pos;
+	public Vector3 end_camera_trans_lookat;
+	public Vector3 end_camera_lookat;
 	private bool already_hit = false;
 	public float distance = 5.0f;
 	public float xSpeed = 120.0f;
@@ -26,6 +28,8 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	float x = 0.0f;
 	float y = 0.0f;
 
+	bool is_rotating;
+
 	// Use this for initialization
 	void Start () 
 	{
@@ -43,7 +47,11 @@ public class SmoothCameraOrbit : MonoBehaviour {
 
 		lookat_pos = target.position;
 		end_camera_lookat = target.position;
+		end_camera_trans_lookat = target.position;
 		end_camera_pos = transform.position;
+		end_camera_trans_pos = transform.position;
+
+		is_rotating = false;
 	}
 
 	void LateUpdate () 
@@ -57,7 +65,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 			y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
 
 			y = ClampAngle(y, yMinLimit, yMaxLimit);
-		
+
 			Quaternion rotation = Quaternion.Euler(y, x, 0);
 
 			distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel")*5, distanceMin, distanceMax);
@@ -76,7 +84,6 @@ public class SmoothCameraOrbit : MonoBehaviour {
 			if(Physics.Raycast(ray, out hit) && !already_hit) {
 
 				already_hit = true;
-				Debug.Log("Hit something: " + hit.collider.gameObject.name); 
 				//lookat_pos = hit.transform.position;
 				//lookat_pos = Vector3.Slerp(lookat_pos, hit.transform.position, 0.01f);
 				end_camera_lookat = hit.transform.position;
@@ -88,13 +95,13 @@ public class SmoothCameraOrbit : MonoBehaviour {
 			}
 
 			Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
-		//	end_camera_pos = rotation * negDistance + target.position;
 
 
 			end_camera_pos = rotation * negDistance + Vector3.zero;
 
 
 			transform.rotation = Quaternion.Euler(y, x, 0);
+			is_rotating = true;
 
 			//transform.rotation = Quaternion.Slerp(transform.rotation, rotation, 0.1f);
 
@@ -107,22 +114,19 @@ public class SmoothCameraOrbit : MonoBehaviour {
 			already_hit = false;
 		}
 
-		//ListenScrollWheelZoom();
+		ListenScrollWheelZoom();
 
 		if (Input.GetMouseButton(2)) {
 			TranslateCameraAlongPlane(Input.mousePosition);
 		}
-
-		transform.position = Vector3.Slerp(transform.position - end_camera_lookat, end_camera_pos, 0.1f) + end_camera_lookat;
+			
+		if(is_rotating)
+			transform.position = Vector3.Slerp(transform.position - end_camera_lookat, end_camera_pos, 0.1f) + end_camera_lookat;
+		else
+			transform.position = Vector3.Lerp(transform.position, end_camera_pos, 0.1f);
 		lookat_pos = Vector3.Slerp(lookat_pos, end_camera_lookat, 0.1f);
 
-		//transform.position = end_camera_pos;
-		//transform.LookAt(end_camera_lookat);
-
 		transform.LookAt(lookat_pos);
-		//DrawFrustum(Camera.main);
-		Debug.Log((target.position - transform.position).magnitude);
-
 
 	}
 
@@ -137,43 +141,46 @@ public class SmoothCameraOrbit : MonoBehaviour {
 
 	private void ListenScrollWheelZoom()
 	{
-		Vector3 forward_translation = Camera.main.transform.forward*1000*Time.deltaTime*Input.GetAxis("Mouse ScrollWheel");
+		Vector3 forward_translation = Camera.main.transform.forward*100*Time.deltaTime*Input.GetAxis("Mouse ScrollWheel");
 		end_camera_pos += forward_translation;
 	}
 
 	private void TranslateCameraAlongPlane(Vector3 mouseOrigin)
 	{
-		float x = -Input.GetAxis("Mouse X") * xSpeed * distance * 0.002f;
-		float y = -Input.GetAxis("Mouse Y") * ySpeed * distance * 0.002f;
-
-		//Vector3 pos = Camera.main.ScreenToViewportPoint(new Vector3(x,y,0));
-
+		float x = -Input.GetAxis("Mouse X") * xSpeed * distance * 0.001f;
+		float y = -Input.GetAxis("Mouse Y") * ySpeed * distance * 0.001f;
 
 		Vector3 direction = target.transform.position - transform.position;
 		direction.Normalize();
 
-		//transform.position += new Vector3(direction.x*x, direction.y*y, 0);
 		Transform camera_transform = Camera.main.transform;
 
 		Vector3 horizontal = camera_transform.right;
 		Vector3 vertical = camera_transform.up;
 		horizontal.Normalize();
+		vertical.Normalize();
 
 		Vector3 horizontal_translation = horizontal*x*20*Time.deltaTime;
 		Vector3 vertical_translation = vertical*y*20*Time.deltaTime;
 
-		//transform.position += horizontal_translation;
-		//transform.position += vertical_translation;
+
+	//	end_camera_translation += horizontal_translation;
+	//	end_camera_translation += vertical_translation;
+
+
+		end_camera_lookat += horizontal_translation;
+		end_camera_lookat += vertical_translation;
 
 		end_camera_pos += horizontal_translation;
 		end_camera_pos += vertical_translation;
 
+		//transform.position = Vector3.Lerp(transform.position, end_camera_trans_pos, 0.1f);
+		//lookat_pos = Vector3.Lerp(lookat_pos, end_camera_trans_lookat, 0.1f);
 
-		end_camera_lookat += horizontal*x*20*Time.deltaTime;
-		end_camera_lookat += vertical*y*20*Time.deltaTime;
+	
+		Debug.Log(end_camera_pos);
 
-
-		//Debug.Log(Camera.main.transform.forward + " " + transform.position);
+		is_rotating = false;
 	}
 
 	private void RotateCameraAroundLookAt()
