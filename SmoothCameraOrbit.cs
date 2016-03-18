@@ -12,14 +12,14 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	public Vector3 end_camera_lookat;
 	private bool already_hit = false;
 	public float distance = 5.0f;
-	public float xSpeed = 120.0f;
-	public float ySpeed = 120.0f;
+	private float xSpeed = 50.0f;
+	private float ySpeed = 120.0f;
 
-	public float yMinLimit = -20f;
-	public float yMaxLimit = 80f;
+	private float yMinLimit = -80f;
+	private float yMaxLimit = 80f;
 
-	private float distanceMin = 2.5f;
-	private float distanceMax = 21f;
+	private float distanceMin = 3f;
+	private float distanceMax = 20f;
 
 	public float scroll_acceleration = 5f;
 
@@ -97,6 +97,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	//	Debug.Log (transform.position + " --- " + end_camera_pos) ;
 
 		if (is_rotating) {
+		//	StartCoroutine(RotateCameraAroundLookAt());
 			transform.position = Vector3.Slerp(transform.position - end_camera_lookat, end_camera_pos, 0.1f) + end_camera_lookat;
 			end_camera_trans_pos = transform.position;
 		} else {
@@ -107,6 +108,15 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		transform.LookAt(lookat_pos);
 
 	}
+	/*
+	IEnumerator RotateCameraAroundLookAt()
+	{
+
+		transform.position = Vector3.Slerp(transform.position - end_camera_lookat, end_camera_pos, 0.1f) + end_camera_lookat;
+
+	}*/
+
+
 
 	void OnDrawGizmos () {
 		// Gizmo Frustum
@@ -120,8 +130,10 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	private void ListenScrollWheelZoom()
 	{
 		Vector3 forward_translation = Camera.main.transform.forward*50*distance*Time.deltaTime*Input.GetAxis("Mouse ScrollWheel");
-		is_rotating = false;
 
+		if((Input.GetAxis("Mouse ScrollWheel") != 0)) {
+			is_rotating = false;
+		}
 		if (distance < distanceMin ) {
 
 			Vector3 new_end_camera_pos = Vector3.ClampMagnitude(end_camera_trans_pos - end_camera_lookat, distanceMin);
@@ -177,12 +189,6 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		is_rotating = false;
 	}
 
-	private void RotateCameraAroundLookAt()
-	{
-
-
-		
-	}
 
 	public static float ClampAngle(float angle, float min, float max)
 	{
