@@ -19,7 +19,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	public float yMaxLimit = 80f;
 
 	private float distanceMin = 2.5f;
-	private float distanceMax = 15f;
+	private float distanceMax = 21f;
 
 	public float scroll_acceleration = 5f;
 
@@ -60,6 +60,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	void LateUpdate () 
 	{
 		ListenScrollWheelZoom();
+	
 		if (Input.GetMouseButton(0)) {
 			
 			x += Input.GetAxis("Mouse X") * xSpeed * distance * 0.02f;
@@ -86,13 +87,14 @@ public class SmoothCameraOrbit : MonoBehaviour {
 
 		if (Input.GetMouseButtonUp(0)) {
 			already_hit = false;
+
 		}
 
 		if (Input.GetMouseButton(2)) {
 			TranslateCameraAlongPlane(Input.mousePosition);
 		}
 		//Debug.Log ((transform.position - end_camera_lookat).magnitude + " --- " + end_camera_pos.magnitude) ;
-		Debug.Log (transform.position + " --- " + end_camera_pos) ;
+	//	Debug.Log (transform.position + " --- " + end_camera_pos) ;
 
 		if (is_rotating) {
 			transform.position = Vector3.Slerp(transform.position - end_camera_lookat, end_camera_pos, 0.1f) + end_camera_lookat;
@@ -118,30 +120,33 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	private void ListenScrollWheelZoom()
 	{
 		Vector3 forward_translation = Camera.main.transform.forward*50*distance*Time.deltaTime*Input.GetAxis("Mouse ScrollWheel");
+		is_rotating = false;
 
-		//Debug.Log (transform.position + "...." + end_camera_pos);
+		if (distance < distanceMin ) {
 
-		if (distance < distanceMin) {
-			
-			Vector3 new_end_camera_pos = end_camera_pos;
-			new_end_camera_pos.Normalize ();
-			new_end_camera_pos *= distanceMin;
-			end_camera_pos = new_end_camera_pos;
+			Vector3 new_end_camera_pos = Vector3.ClampMagnitude(end_camera_trans_pos - end_camera_lookat, distanceMin);
+			end_camera_trans_pos = new_end_camera_pos + end_camera_lookat;
 
-		} else if (distance > distanceMax) {
-			
-			Vector3 new_end_camera_pos = end_camera_pos;
-			new_end_camera_pos.Normalize ();
-			new_end_camera_pos *= distanceMax;
-			end_camera_pos = new_end_camera_pos;
+			if(Input.GetAxis("Mouse ScrollWheel") < 0) {
+				end_camera_trans_pos += forward_translation;
+			}
+
+		} else if (distance > distanceMax ) {
+
+			Vector3 new_end_camera_pos = Vector3.ClampMagnitude(end_camera_trans_pos - end_camera_lookat, distanceMax);
+			end_camera_trans_pos = new_end_camera_pos + end_camera_lookat;
+
+			if(Input.GetAxis("Mouse ScrollWheel") > 0) {
+				end_camera_trans_pos += forward_translation;
+			}
 
 		} else {
-			end_camera_pos += forward_translation;
+			end_camera_trans_pos += forward_translation;
 		}
 		//Debug.Log (transform.position + "...." + end_camera_pos + "...." + direction);
 
-		distance = Vector3.Distance(lookat_pos, transform.position);
-		//distance = Vector3.Distance (lookat_pos, end_camera_pos);
+		//distance = Vector3.Distance(lookat_pos, transform.position);
+		distance = Vector3.Distance (lookat_pos, end_camera_trans_pos);
 	}
 
 	private void TranslateCameraAlongPlane(Vector3 mouseOrigin)
