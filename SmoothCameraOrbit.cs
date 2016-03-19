@@ -18,8 +18,8 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	private float yMinLimit = -80f;
 	private float yMaxLimit = 80f;
 
-	private float distanceMin = 3f;
-	private float distanceMax = 20f;
+	public float distanceMin = 3f;
+	public float distanceMax = 20f;
 
 	public float scroll_acceleration = 5f;
 
