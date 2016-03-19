@@ -12,8 +12,8 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	public Vector3 end_camera_lookat;
 	private bool already_hit = false;
 	public float distance = 5.0f;
-	private float xSpeed = 50.0f;
-	private float ySpeed = 120.0f;
+	public float xSpeed = 120.0f;
+	public float ySpeed = 120.0f;
 
 	private float yMinLimit = -80f;
 	private float yMaxLimit = 80f;
@@ -22,6 +22,13 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	private float distanceMax = 20f;
 
 	public float scroll_acceleration = 5f;
+
+	public Texture2D regular_cursor_texture;
+	public Texture2D translation_cursor_texture;
+	public Texture2D rotate_cursor_texture;
+
+	public CursorMode cursorMode = CursorMode.ForceSoftware;
+	public Vector2 hotSpot = Vector2.zero;
 
 	private Rigidbody rigidbody;
 	[SerializeField]
@@ -54,47 +61,33 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		end_camera_trans_pos = transform.position;
 
 		is_rotating = false;
-
+		Cursor.SetCursor(regular_cursor_texture, hotSpot, cursorMode);
 	}
+		
 
 	void LateUpdate () 
 	{
 		ListenScrollWheelZoom();
-	
+		Cursor.SetCursor(regular_cursor_texture, hotSpot, cursorMode);
 		if (Input.GetMouseButton(0)) {
-			
-			x += Input.GetAxis("Mouse X") * xSpeed * distance * 0.02f;
-			y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
+			RotateCameraAlongPlane();
+		}
 
-			y = ClampAngle(y, yMinLimit, yMaxLimit);
-			Quaternion rotation = Quaternion.Euler(y, x, 0);
+		if (Input.GetMouseButtonUp(0)) {
+			already_hit = false;
 
 			RaycastHit hit;
 			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
 			if(Physics.Raycast(ray, out hit) && !already_hit) {
-				end_camera_lookat = hit.transform.position;
+				end_camera_lookat = hit.point;
 			}
-			already_hit = true;
-
-			Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
-
-			end_camera_pos = rotation * negDistance + Vector3.zero;
-
-			transform.rotation = Quaternion.Euler(y, x, 0);
-			is_rotating = true;
-		}
-
-		if (Input.GetMouseButtonUp(0)) {
-			already_hit = false;
 
 		}
 
 		if (Input.GetMouseButton(2)) {
 			TranslateCameraAlongPlane(Input.mousePosition);
 		}
-		//Debug.Log ((transform.position - end_camera_lookat).magnitude + " --- " + end_camera_pos.magnitude) ;
-	//	Debug.Log (transform.position + " --- " + end_camera_pos) ;
 
 		if (is_rotating) {
 		//	StartCoroutine(RotateCameraAroundLookAt());
@@ -106,17 +99,27 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		lookat_pos = Vector3.Slerp(lookat_pos, end_camera_lookat, 0.1f);
 
 		transform.LookAt(lookat_pos);
-
 	}
-	/*
-	IEnumerator RotateCameraAroundLookAt()
+
+	private void RotateCameraAlongPlane()
 	{
+		Cursor.SetCursor(rotate_cursor_texture, hotSpot, cursorMode);
 
-		transform.position = Vector3.Slerp(transform.position - end_camera_lookat, end_camera_pos, 0.1f) + end_camera_lookat;
+		x += Input.GetAxis("Mouse X") * xSpeed  * 0.02f;
+		y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
 
-	}*/
+		y = ClampAngle(y, yMinLimit, yMaxLimit);
+		Quaternion rotation = Quaternion.Euler(y, x, 0);
 
+		already_hit = true;
 
+		Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
+
+		end_camera_pos = rotation * negDistance + Vector3.zero;
+
+		transform.rotation = Quaternion.Euler(y, x, 0);
+		is_rotating = true;
+	}
 
 	void OnDrawGizmos () {
 		// Gizmo Frustum
@@ -129,8 +132,8 @@ public class SmoothCameraOrbit : MonoBehaviour {
 
 	private void ListenScrollWheelZoom()
 	{
+		
 		Vector3 forward_translation = Camera.main.transform.forward*50*distance*Time.deltaTime*Input.GetAxis("Mouse ScrollWheel");
-
 		if((Input.GetAxis("Mouse ScrollWheel") != 0)) {
 			is_rotating = false;
 		}
@@ -155,14 +158,13 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		} else {
 			end_camera_trans_pos += forward_translation;
 		}
-		//Debug.Log (transform.position + "...." + end_camera_pos + "...." + direction);
 
-		//distance = Vector3.Distance(lookat_pos, transform.position);
 		distance = Vector3.Distance (lookat_pos, end_camera_trans_pos);
 	}
 
 	private void TranslateCameraAlongPlane(Vector3 mouseOrigin)
 	{
+		Cursor.SetCursor(translation_cursor_texture, hotSpot, cursorMode);
 
 		float x = -Input.GetAxis("Mouse X") * xSpeed * distance * 0.001f;
 		float y = -Input.GetAxis("Mouse Y") * ySpeed * distance * 0.001f;
