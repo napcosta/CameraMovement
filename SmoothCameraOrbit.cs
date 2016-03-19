@@ -14,7 +14,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	public float distance = 5.0f;
 	public float xSpeed = 120.0f;
 	public float ySpeed = 120.0f;
-
+	private bool has_rotated = false;
 	private float yMinLimit = -80f;
 	private float yMaxLimit = 80f;
 
@@ -79,9 +79,11 @@ public class SmoothCameraOrbit : MonoBehaviour {
 			RaycastHit hit;
 			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-			if(Physics.Raycast(ray, out hit) && !already_hit) {
+			if(Physics.Raycast(ray, out hit) && !already_hit && !has_rotated) {
 				end_camera_lookat = hit.point;
 			}
+			has_rotated = false;
+			Debug.Log(has_rotated);
 
 		}
 
@@ -118,7 +120,12 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		end_camera_pos = rotation * negDistance + Vector3.zero;
 
 		transform.rotation = Quaternion.Euler(y, x, 0);
+
 		is_rotating = true;
+		if (Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0) {
+			has_rotated = true;
+		}
+			
 	}
 
 	void OnDrawGizmos () {
@@ -189,6 +196,7 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		end_camera_trans_pos += vertical_translation;
 
 		is_rotating = false;
+		has_rotated = false;
 	}
 
 
