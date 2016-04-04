@@ -12,8 +12,10 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	public Vector3 end_camera_lookat;
 	private bool already_hit = false;
 	public float distance = 5.0f;
-	public float xSpeed = 120.0f;
-	public float ySpeed = 120.0f;
+	public float xSpeedRotation = 120.0f;
+	public float ySpeedRotation = 120.0f;
+	public float xSpeedTranslation = 120.0f;
+	public float ySpeedTranslation = 120.0f;
 	private bool has_rotated = false;
 	private float yMinLimit = -80f;
 	private float yMaxLimit = 80f;
@@ -95,10 +97,12 @@ public class SmoothCameraOrbit : MonoBehaviour {
 		//	StartCoroutine(RotateCameraAroundLookAt());
 			transform.position = Vector3.Slerp(transform.position - end_camera_lookat, end_camera_pos, 0.1f) + end_camera_lookat;
 			end_camera_trans_pos = transform.position;
+			lookat_pos = Vector3.Slerp(lookat_pos, end_camera_lookat, 0.1f);
 		} else {
 			transform.position = Vector3.Lerp(transform.position, end_camera_trans_pos, 0.1f);
+			lookat_pos = Vector3.Lerp(lookat_pos, end_camera_lookat, 0.1f);
 		}
-		lookat_pos = Vector3.Slerp(lookat_pos, end_camera_lookat, 0.1f);
+		//lookat_pos = Vector3.Slerp(lookat_pos, end_camera_lookat, 0.1f);
 
 		transform.LookAt(lookat_pos);
 	}
@@ -107,8 +111,8 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	{
 		Cursor.SetCursor(rotate_cursor_texture, hotSpot, cursorMode);
 
-		x += Input.GetAxis("Mouse X") * xSpeed  * 0.02f;
-		y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
+		x += Input.GetAxis("Mouse X") * xSpeedRotation ;
+		y -= Input.GetAxis("Mouse Y") * ySpeedRotation;
 
 		y = ClampAngle(y, yMinLimit, yMaxLimit);
 		Quaternion rotation = Quaternion.Euler(y, x, 0);
@@ -173,8 +177,8 @@ public class SmoothCameraOrbit : MonoBehaviour {
 	{
 		Cursor.SetCursor(translation_cursor_texture, hotSpot, cursorMode);
 
-		float x = -Input.GetAxis("Mouse X") * xSpeed * distance * 0.001f;
-		float y = -Input.GetAxis("Mouse Y") * ySpeed * distance * 0.001f;
+		float x = -Input.GetAxis("Mouse X") * xSpeedTranslation * distance;
+		float y = -Input.GetAxis("Mouse Y") * ySpeedTranslation * distance;
 
 		Vector3 direction = target.transform.position - transform.position;
 		direction.Normalize();
